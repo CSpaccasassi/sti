@@ -1,4 +1,4 @@
-# Session Type Inference tool
+# Session Types Inference tool
 ## Synopsis
 This project implements the inference algorithm for finite session types in MLs, an ML-like concurrent functional language, as described in [1]. A session type describes the protocol according to which two processes interact at the two endpoints of a channel. 
 Combining and extending well-known techniques [2, 3], we define a type-based static analysis to discover the session types associated to each channel in  unannotated MLs code. Our framework separates the ML type system from the typing of sessions; as a result the inference is performed in two steps. The first step infers the ML type of the source code, together with its communication effects [2]. The second phase finds the protocols that the MLs code's communication effects obey, if any exist. In addition to this, our tool also guarantees partial lock freedom.
