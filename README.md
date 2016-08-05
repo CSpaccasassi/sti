@@ -51,9 +51,7 @@ cabal build
 
 ## References
 [1] C. Spaccasassi, V. Koutavas, "Type-Based Analysis for Session Inference (Extended Abstract)". FORTE 2016
-
 [2] T. Amtoft, H. R. Nielson, F. Nielson: "Type and effect systems - behaviours for concurrency". Imperial College Press 1999
-
 [3] G. Castagna, M. Dezani-Ciancaglini, E. Giachino, L. Padovani. "Foundations of session types". PPDP 2009: 219-230
 
 
