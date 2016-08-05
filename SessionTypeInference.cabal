@@ -1,0 +1,32 @@
+name:           SessionTypeInference
+version:        0.1
+cabal-version:  >= 1.2
+build-type:     Simple
+author:         Carlo Spaccasassi
+
+executable SessionTypeInference
+  hs-source-dirs:  src
+  main-is:         Main.hs
+  build-depends:   base >= 4
+  ghc-options:     -Wall
+
+  build-depends:   
+                   base >= 4,
+                   fgl,
+                   containers,
+                   pretty,
+                   transformers,
+                   parsec
+                   
+  other-modules:   
+                   AlgorithmF,
+                   AlgorithmW,
+                   Parser,
+                   Syntax,
+                   Types,
+                   AlgorithmST,
+                   AlgorithmD,
+                   PP.Latex,
+                   PP.Literal
+  extensions:
+                   FlexibleInstances

@@ -1,0 +1,345 @@
+module PP.Latex where
+
+--import Text.PrettyPrint.HughesPJ ( text, (<>),  Doc, render, parens, hcat,
+--                                   --braces,
+--                                   punctuate, comma )
+--import Syntax
+--import Types
+--
+---- pretty prints an expression. 
+--ppLatex :: Exp -> Doc
+--ppLatex = ppExprLatexLatex 0
+--
+--
+--ppExprLatexLatex :: Int -> Exp -> Doc
+--ppExprLatexLatex i e = case e of              -- i is the indentation level
+--  V v -> ppValLatex i v -- ppValLatexue i v
+--  C c -> ppConstLatex c 
+--  --
+--  Req c l -> text "\\erequest{ " <> ppRL l <> text (" }{" ++ c ++ "}") 
+--  Acc c l -> text "\\eaccept{ "  <> ppRL l <> text (" }{" ++ c ++ "}")
+--  --
+--  Free x    ->  text x
+--  Bound x _ ->  text x
+--  --
+--  App e1 e2   -> parens ( ppExprLatex i e1 
+--                          <> text "~" 
+--                          <> ppExprLatex i e2 )
+--  Let x e1 e2 -> text ("\\elet{" ++ x ++"}{") 
+--                   <> ppExprLatex (i+1) e1 
+--                   <> text "}{" 
+--                   <> ppExprLatex i e2
+--                   <> text "}"
+--  If e1 e2 e3 -> text "\\eif{" <> ppExprLatex i e1 
+--                      <> text "}{" <> ppExprLatex i e2 
+--                      <> text "}{" <> ppExprLatex i e3
+--                      <> text "}"
+--
+--  Pair e1 e2  -> parens (ppExprLatex i e1 <> text ", " <> ppExprLatex i e2)
+--  Select e1 l -> text ("\\eselectnew{" ++ l ++ " }~") <> ppExprLatex i e1
+--  Match e1 es -> text "\\ematch{" <> ppExprLatex i e1 <> text "}{" <> ppMListLatex i es 
+--                  <> text "}{}"
+--  Spawn e1    -> text "\\espawn " <> parens (ppExprLatex i e1)
+--
+--
+--ppMListLatex :: Int -> [(Label, Exp)] -> Doc
+--ppMListLatex i ls = 
+--  let ls' = punctuate (comma <> text " ") (map (f i) ls)
+--  in   (hcat ls')
+--    where f j (l, e) = text ( l ++ " : ") <> ppExprLatex j e 
+--
+--
+--ppValLatex :: Int -> Val -> Doc
+--ppValLatex i v = case v of
+--  U   -> text "()"
+--  TT  -> text "\\ctrue"
+--  FF  -> text "\\cfalse"
+--  N n -> integer n
+--  --
+--  PairV v1 v2 -> parens (ppValLatex i v1 <> text ", " <> ppValLatex i v2 ) 
+--  Fun x e     -> text ("\\efunc{" ++ x ++ "}{") <> ppExprLatex i e <> text "}"
+--  Fix f x e   -> text ("\\efix{" ++ f ++ "}{" ++ x ++ "}{")
+--                 <> ppExprLatex i e <> text "}"
+--  --
+----  PubChan c chId  -> text ("\\echan{" ++ c ++ "}{" ++ show chId ++ "}") 
+--  Ses     p       -> text ("\\schan{" ++ show p ++ "}{}")
+--
+--
+--ppConstLatex :: Constant -> Doc
+--ppConstLatex c = case c of
+----  Request -> text ("\\erequest{}{}") 
+----  Accept  -> text ("\\eaccept{}{}")
+--  Resume l -> text "\\eresume{" <> ppRL l <> text "}{}"
+--  --
+--  Send -> text "\\esend{}"
+--  Recv -> text "\\erecv{}{}"
+--  --
+--  Delegate -> text "\\edeleg{}"
+--  Fst      -> text "\\mathtt{fst}"
+--  Snd      -> text "\\mathtt{snd}"
+--  
+--  
+--  
+--  
+--  
+--  
+----------------------------------------------------------------------------------
+---- Pretty Printing for Types
+----------------------------------------------------------------------------------
+--
+---- constraints
+--ppConstraints :: Constraints -> Doc
+--ppConstraints cs = text "\\begin{itemize}\n\\item $ "
+--  <> hcat (punctuate (text " $\n\\item $ ") (map ppConstraint $ Set.toList cs))
+--  <> text " $\n\\end{itemize}"
+--
+--ppConstraint :: Constraint -> Doc
+--ppConstraint c = case c of
+--  TC t1 t2    -> ppType t1    <> text " \\subseteq " <> ppType t2
+--  SC s sl     -> ppSesLab sl  <> text " \\sim"       <> ppSession s
+--  BC b bvar   -> ppBehav b    <> text " \\subseteq " <> ppBeta bvar
+--  RC r rho    -> ppReg r      <> text " \\sim"       <> ppRho rho
+--  DC s1 s2    -> ppSession s1 <> text " \\bowtie"    <> ppSession s2
+--  EVarC as is (Psi i) -> hcat (punctuate
+--                          (comma <> text " + " )
+--                          (map
+--                            (\(l_i, s_i) -> text "?_{Ac} "
+--                                            <> text (l_i ++ ".")
+--                                            <> ppSession s_i ) (Map.assocs as)
+--                           ++
+--                           map
+--                            (\(l_i, s_i) -> text "?_{In} "
+--                                            <> text (l_i ++ ".")
+--                                            <> ppSession s_i ) (Map.assocs is)
+--                          ))
+--              <> text " \\sim \\psiext_{" <> ppUnique i <> text "}"
+--
+--  IVarC cs (Psi i) -> hcat (punctuate
+--                          (comma <> text " (+) " )
+--                          (map
+--                            (\(l_i, s_i) -> text "!"
+--                                            <> text (l_i ++ ".")
+--                                            <> ppSession s_i ) (Map.assocs cs)))
+--              <> text " \\sim \\psiint_{" <> ppUnique i <> text "}"
+--              
+---- typing context
+--ppTypingContext :: TypingContext -> Doc
+--ppTypingContext ctx = hcat (punctuate (text ", ") (map ppTCItem ctx) )
+--
+--ppTCItem :: TCItem -> Doc
+--ppTCItem (TSVar x ts) = text (x ++ ":") <> ppTS ts
+--ppTCItem (TyVar x t ) = text (x ++ ":") <> ppType t
+--
+---- Type Schemas
+--ppTS :: TypeSchema -> Doc
+--ppTS (TS gs cs t) = text "\\forall ("
+--                  <> hcat gammas
+--                  <> text " : "
+--                  <> hcat constraints
+--                  <> text "). "
+--                  <> ppType t
+-- where
+--  gammas      = punctuate (comma <> text " ") (map ppGamma (Set.toList gs))
+--  constraints = punctuate (comma <> text " ") (map ppConstraint (Set.toList cs))
+--  
+---- type, session, region and behaviour variables
+--ppGamma :: Gamma -> Doc
+--ppGamma g = case g of
+--  TG t -> ppAlpha t
+--  SG s -> ppPsi s
+--  RG t -> ppRho t
+--  BG b -> ppBeta b
+---- Types
+--ppType :: Type -> Doc
+--ppType t = case t of
+--  TV    tvar -> ppAlpha tvar
+--  TUnit      -> text "\\tunit"
+--  TBool      -> text "\\tbool"
+--  TInt       -> text "\\tint"
+--  --
+--  TPair    t1 t2    -> parens ( ppType t1 <> text " \\times " <> ppType t2 )
+--  TFun     t1 t2    -> ppType t1 <> text " \\rightarrow " <> ppType t2
+--  TBFun    t1 t2 b  -> ppType t1 <> text " \\xrightarrow{"
+--                       <> ppBeta b <> text "} "
+--                       <> ppType t2
+--  TSes  r   -> text " \\tses{ " <> ppReg r <> text "}" 
+--
+---- behaviours
+--ppBehav :: Behav -> Doc
+--ppBehav b = case b of
+--  BV      bvar  -> ppBeta bvar
+--  BTau          -> text "\\tau"
+--  BSeq    b1 b2 -> ppBehav b1 <> text "; " <> ppBehav b2
+--  BRec    b1 b2 -> text "\\orec{ " <> parens (ppBehav b1)   <> text "}{"
+--                   <> ppBeta b2 <> text "}"
+--  BSpawn  b1    -> text "\\espawn{ " <> parens (ppBehav b1) <> text "}"
+--  BIn  b1 b2 -> parens (ppBehav b1 <> text " \\oplus " <> ppBehav b2)
+--  BPush   l  s  -> text "\\pusho{ " <> ppRL l
+--                   <> text "} {"    <> ppSession s  <> text "}{}"
+--  BOp    p     -> ppPopAct p
+--  BEx  r cs  -> text "+ \\{" <>  hcat (punctuate
+--                          (text ",~" )
+--                          (map
+--                            (\(l_i, b_i) -> ppReg r
+--                                              <> text "?"
+--                                              <> text (l_i ++ ".")
+--                                              <> ppBehav b_i )
+--                            cs)) <> text " \\}"
+--
+---- behaviour pop actions
+--ppPopAct :: BOps -> Doc
+--ppPopAct pa = case pa of
+--  BSend   k t   -> ppReg k  <> text "!" <> ppType t
+--  BRecv   k t   -> ppReg k  <> text "?" <> ppType t
+--  BDeleg  k1 k2 -> ppReg k1 <> text "!" <> ppReg k2
+--  BResume k1 k2 -> ppReg k1 <> text "?" <> ppReg k2
+--  BInC    k l   -> ppReg k  <> text ('!' : l)
+--
+--              
+---- Sessions
+--ppSession :: Ses -> Doc
+--ppSession s = case s of
+--  SV     psi -> ppPsi psi
+--  EVar (Psi i) -> text "\\psiext_{" <> ppUnique i <> text "}"
+--  IVar (Psi i) -> text "\\psiint_{" <> ppUnique i <> text "}"
+--  --
+--  SEnd       -> text "\\tend"
+--  --
+--  SSend  t s1     -> text "!" <> ppType t <> text "." <> ppSession s1
+--  SRecv  t s1     -> text "?" <> ppType t <> text "." <> ppSession s1
+--  --
+--  SDeleg   s1 s2  -> text "![" <> ppSession s1 <> text "]." <> ppSession s2
+--  SResume  s1 s2  -> text "?[" <> ppSession s1 <> text "]." <> ppSession s2
+--  --
+--  SInC     ss     -> hcat (punctuate
+--                          (comma <> text " (+) " )
+--                          (map
+--                            (\(l_i, s_i) -> text "!"
+--                                            <> text (l_i ++ ".")
+--                                            <> ppSession s_i )
+--                            ss))
+--  SExC    as is   ->  text " +{ "
+--                      <> hcat (punctuate
+--                                (text ", " )
+--                                (map
+--                                  (\(l_i, s_i) -> text "?_{Ac} "
+--                                                <> text (l_i ++ ".")
+--                                                <> ppSession s_i )
+--                                  as))
+--                      <> text " -- "
+--                      <> hcat (punctuate
+--                                (text ", " )
+--                                (map
+--                                  (\(l_i, s_i) -> text "?_{In} "
+--                                                  <> text (l_i ++ ".")
+--                                                  <> ppSession s_i )
+--                                  is)
+--                                  )
+--                      <> text "}"       
+--
+--
+---- session types
+--ppSesLab :: SesLab -> Doc
+--ppSesLab (SReq c l) = text ("{" ++ c ++ "}^{") <> ppRL l <> text "}"
+--ppSesLab (SAcc c l) = text ("\\overline{{" ++ c ++ "}^{") <> ppRL l <> text "}}"
+--
+--
+--
+---- Variables
+--ppTSub :: TSub -> Doc
+--ppTSub s =  text "[ "
+--            <> hcat
+--                (punctuate
+--                  (text ", ")
+--                  (map
+--                    (\(x,y) -> ppAlpha (Alpha x) <> text "\\mapsto" <> ppType y )
+--                    (Map.toList s)))
+--            <> text "]"
+--
+--ppSSub :: SSub -> Doc
+--ppSSub s =  text "["
+--            <> hcat
+--                (punctuate
+--                  (text ", ")
+--                  (map
+--                    (\(x,y) -> ppPsi (Psi x) <> text "\\mapsto" <> ppSession y)
+--                    (Map.toList s)))
+--            <> text "]"
+--
+--ppBSub :: BSub -> Doc
+--ppBSub s =  text "["
+--            <> hcat
+--                (punctuate
+--                  (text ", ")
+--                  (map
+--                    (\(x,y) -> ppBeta (Beta x) <> text "\\mapsto" <> ppBeta (Beta y))
+--                    (Map.toList s)))
+--            <> text "]"
+--
+--ppRSub :: RSub -> Doc
+--ppRSub s =  text "["
+--            <> hcat
+--                (punctuate
+--                  (text ", ")
+--                  (map
+--                    (\(x,y) -> ppRho (Rho x) <> text "\\mapsto" <> ppRho (Rho y))
+--                    (Map.toList s)))
+--            <> text "]"
+--
+--
+--ppSLSub :: SLSub -> Doc
+--ppSLSub s =  text "["
+--            <> hcat
+--                (punctuate
+--                  (text ", ")
+--                  (map
+--                    (\(x,y) -> ppSLabel (SL x) <> text "\\mapsto "
+--                               <> ppSLabel (SL y))
+--                    (Map.toList s)))
+--            <> text "]"
+--
+--
+---- Substitutables
+--ppSub :: Substitution -> Doc
+--ppSub ( Sub ts ss bs rs sls) = text " $ "
+--                            <> hcat
+--                              ( punctuate
+--                                ( text " " )
+--                                [ppT, ppS, ppB, ppR, ppSL] )
+--                            <> text " $ "
+--  where ppT = ppTSub ts
+--        ppS = ppSSub ss
+--        ppB = ppBSub bs
+--        ppR = ppRSub rs
+--        ppSL = ppSLSub sls
+--              
+--ppFV :: FreeVars -> Doc
+--ppFV ( FreeVars ts ss bs rs ) = text "FV: " <> tv <> sc <>bv <> rv
+--  where tv = if Set.null ts
+--              then text ""
+--              else text "Type: ["
+--                   <> hcat ( punctuate ( text ", ")
+--                                       ( map (ppAlpha . Alpha )
+--                                             ( Set.toList ts ) ) )
+--                   <> text "] "
+--        sc = if Set.null ss
+--              then text ""
+--              else text "Ses: ["
+--                   <> hcat ( punctuate ( text ", ")
+--                                       ( map (ppPsi . Psi )
+--                                             ( Set.toList ts ) ) )
+--                   <> text "] "
+--        bv = if Set.null bs
+--              then text ""
+--              else text "Beh: ["
+--                   <> hcat ( punctuate ( text ", ")
+--                                       ( map (ppBeta . Beta )
+--                                             ( Set.toList ts ) ) )
+--                   <> text "] "
+--        rv = if Set.null rs
+--              then text ""
+--              else text "Reg: ["
+--                   <> hcat ( punctuate ( text ", ")
+--                                       ( map (ppRho . Rho )
+--                                             ( Set.toList ts ) ) )
+--                   <> text "] "
